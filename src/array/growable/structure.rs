@@ -25,6 +25,8 @@ impl<'a> GrowableStruct<'a> {
     /// # Panics
     /// If `arrays` is empty.
     pub fn new(arrays: Vec<&'a StructArray>, mut use_validity: bool, capacity: usize) -> Self {
+        assert!(!arrays.is_empty());
+
         // if any of the arrays has nulls, insertions from any array requires setting bits
         // as there is at least one array with nulls.
         if arrays.iter().any(|array| array.null_count() > 0) {
@@ -69,7 +71,7 @@ impl<'a> GrowableStruct<'a> {
         let values = values.into_iter().map(|mut x| x.as_box()).collect();
 
         StructArray::new(
-            DataType::Struct(self.arrays[0].fields().to_vec()),
+            self.arrays[0].data_type().clone(),
             values,
             validity.into(),
         )
@@ -121,7 +123,7 @@ impl<'a> From<GrowableStruct<'a>> for StructArray {
         let values = val.values.into_iter().map(|mut x| x.as_box()).collect();
 
         StructArray::new(
-            DataType::Struct(val.arrays[0].fields().to_vec()),
+            val.arrays[0].data_type().clone(),
             values,
             val.validity.into(),
         )
