@@ -601,6 +601,18 @@ mod tests {
                 Some(vec![0, 1]),
                 UnionMode::Sparse,
             ),
+            DataType::Union(
+                vec![
+                    Field::new("a", DataType::Int64, true),
+                    Field::new(
+                        "b",
+                        DataType::List(Box::new(Field::new("item", DataType::Int32, true))),
+                        true,
+                    ),
+                ],
+                None,
+                UnionMode::Sparse,
+            ),
         ];
         for time_unit in [
             TimeUnit::Second,
