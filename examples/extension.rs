@@ -1,4 +1,7 @@
-use std::io::{Cursor, Seek, Write};
+use std::{
+    io::{Cursor, Seek, Write},
+    sync::Arc,
+};
 
 use re_arrow2::array::*;
 use re_arrow2::chunk::Chunk;
@@ -39,7 +42,7 @@ fn write_ipc<W: Write + Seek>(writer: W, array: impl Array + 'static) -> Result<
     let options = write::WriteOptions { compression: None };
     let mut writer = write::FileWriter::new(writer, schema, None, options);
 
-    let batch = Chunk::try_new(vec![Arc::new(array) as Box<dyn Array>])?;
+    let batch = Chunk::try_new(vec![Box::new(array) as Box<dyn Array>])?;
 
     writer.start()?;
     writer.write(&batch, None)?;
