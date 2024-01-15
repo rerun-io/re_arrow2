@@ -428,7 +428,7 @@ fn write_timestamp() -> Result<()> {
 #[test]
 fn write_timestamp_with_tz_secs() -> Result<()> {
     let array = PrimitiveArray::new(
-        DataType::Timestamp(TimeUnit::Second, Some("UTC".to_owned())),
+        DataType::Timestamp(TimeUnit::Second, Some("UTC".to_owned().into())),
         vec![10i64, 1 << 32, 1 << 33].into(),
         None,
     );
@@ -441,7 +441,7 @@ fn write_timestamp_with_tz_secs() -> Result<()> {
 #[test]
 fn write_timestamp_with_tz_micros() -> Result<()> {
     let array = PrimitiveArray::new(
-        DataType::Timestamp(TimeUnit::Microsecond, Some("+02:00".to_owned())),
+        DataType::Timestamp(TimeUnit::Microsecond, Some("+02:00".to_owned().into())),
         vec![
             10i64 * 1_000_000,
             (1 << 32) * 1_000_000,
@@ -462,7 +462,7 @@ fn write_timestamp_with_tz_micros() -> Result<()> {
 #[test]
 fn write_timestamp_with_chrono_tz_millis() -> Result<()> {
     let array = PrimitiveArray::new(
-        DataType::Timestamp(TimeUnit::Millisecond, Some("Europe/Oslo".to_owned())),
+        DataType::Timestamp(TimeUnit::Millisecond, Some("Europe/Oslo".to_owned().into())),
         vec![
             10i64 * 1_000,
             (1 << 32) * 1_000,
