@@ -231,6 +231,7 @@ which implies that it is possible to run <code>parse</code> on a separate thread
 thereby maximizing IO throughput. The example below shows how to do just that:</p>
 <pre><pre class="playground"><code class="language-rust">use crossbeam_channel::unbounded;
 
+use std::sync::Arc;
 use std::thread;
 use std::time::SystemTime;
 
@@ -249,7 +250,7 @@ fn parallel_read(path: &amp;str) -&gt; Result&lt;Vec&lt;Chunk&lt;Box&lt;dyn Arra
     let mut reader = read::ReaderBuilder::new().from_path(path)?;
     let (fields, _) =
         read::infer_schema(&amp;mut reader, Some(batch_size * 10), has_header, &amp;read::infer)?;
-    let fields = Box::new(fields);
+    let fields = Arc::new(fields);
 
     let start = SystemTime::now();
     // spawn a thread to produce `Vec&lt;ByteRecords&gt;` (IO bounded)

@@ -875,7 +875,10 @@ fn main() -&gt; Result&lt;()&gt; {
 In particular, its physical representation is equal to its inner <code>DataType</code>, which implies
 that all functionality in this crate works as if it was the inner <code>DataType</code>.</p>
 <p>The following example shows how to declare one:</p>
-<pre><pre class="playground"><code class="language-rust">use std::io::{Cursor, Seek, Write};
+<pre><pre class="playground"><code class="language-rust">use std::{
+    io::{Cursor, Seek, Write},
+    sync::Arc,
+};
 
 use re_arrow2::array::*;
 use re_arrow2::chunk::Chunk;
@@ -887,7 +890,7 @@ use re_arrow2::io::ipc::write;
 fn main() -&gt; Result&lt;()&gt; {
     // declare an extension.
     let extension_type =
-        DataType::Extension(&quot;date16&quot;.to_string(), Box::new(DataType::UInt16), None);
+        DataType::Extension(&quot;date16&quot;.to_string(), Arc::new(DataType::UInt16), None);
 
     // initialize an array with it.
     let array = UInt16Array::from_slice([1, 2]).to(extension_type.clone());
@@ -990,6 +993,7 @@ which implies that it is possible to run <code>parse</code> on a separate thread
 thereby maximizing IO throughput. The example below shows how to do just that:</p>
 <pre><pre class="playground"><code class="language-rust">use crossbeam_channel::unbounded;
 
+use std::sync::Arc;
 use std::thread;
 use std::time::SystemTime;
 
@@ -1008,7 +1012,7 @@ fn parallel_read(path: &amp;str) -&gt; Result&lt;Vec&lt;Chunk&lt;Box&lt;dyn Arra
     let mut reader = read::ReaderBuilder::new().from_path(path)?;
     let (fields, _) =
         read::infer_schema(&amp;mut reader, Some(batch_size * 10), has_header, &amp;read::infer)?;
-    let fields = Box::new(fields);
+    let fields = Arc::new(fields);
 
     let start = SystemTime::now();
     // spawn a thread to produce `Vec&lt;ByteRecords&gt;` (IO bounded)
