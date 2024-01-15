@@ -37,18 +37,18 @@ pub trait ArcExt<T> {
     /// let ptr = inner.as_ptr();
     ///
     /// let arc = Arc::new(inner);
-    /// let inner = Arc::unwrap_or_clone(arc);
+    /// let inner = ArcExt::unwrap_or_clone_polyfill(arc);
     /// // The inner value was not cloned
     /// assert!(ptr::eq(ptr, inner.as_ptr()));
     ///
     /// let arc = Arc::new(inner);
     /// let arc2 = arc.clone();
-    /// let inner = Arc::unwrap_or_clone(arc);
+    /// let inner = ArcExt::unwrap_or_clone_polyfill(arc);
     /// // Because there were 2 references, we had to clone the inner value.
     /// assert!(!ptr::eq(ptr, inner.as_ptr()));
     /// // `arc2` is the last reference, so when we unwrap it we get back
     /// // the original `String`.
-    /// let inner = Arc::unwrap_or_clone(arc2);
+    /// let inner = ArcExt::unwrap_or_clone_polyfill(arc2);
     /// assert!(ptr::eq(ptr, inner.as_ptr()));
     /// ```
     fn unwrap_or_clone_polyfill(this: Self) -> T;
