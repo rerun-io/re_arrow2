@@ -128,7 +128,7 @@ fn i32_to_large_list_i32() {
     let array = Int32Array::from_slice([5, 6, 7, 8, 9]);
     let b = cast(
         &array,
-        &LargeList(Box::new(Field::new("item", DataType::Int32, true))),
+        &LargeList(Arc::new(Field::new("item", DataType::Int32, true))),
         CastOptions::default(),
     )
     .unwrap();

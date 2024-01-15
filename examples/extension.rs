@@ -10,7 +10,7 @@ use re_arrow2::io::ipc::write;
 fn main() -> Result<()> {
     // declare an extension.
     let extension_type =
-        DataType::Extension("date16".to_string(), Box::new(DataType::UInt16), None);
+        DataType::Extension("date16".to_string(), Arc::new(DataType::UInt16), None);
 
     // initialize an array with it.
     let array = UInt16Array::from_slice([1, 2]).to(extension_type.clone());
@@ -39,7 +39,7 @@ fn write_ipc<W: Write + Seek>(writer: W, array: impl Array + 'static) -> Result<
     let options = write::WriteOptions { compression: None };
     let mut writer = write::FileWriter::new(writer, schema, None, options);
 
-    let batch = Chunk::try_new(vec![Box::new(array) as Box<dyn Array>])?;
+    let batch = Chunk::try_new(vec![Arc::new(array) as Box<dyn Array>])?;
 
     writer.start()?;
     writer.write(&batch, None)?;

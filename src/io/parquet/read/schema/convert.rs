@@ -1128,7 +1128,7 @@ mod tests {
                 Field::new("int96_field", coerced_to.clone(), false),
                 Field::new(
                     "int96_list",
-                    DataType::List(Box::new(Field::new("element", coerced_to.clone(), true))),
+                    DataType::List(Arc::new(Field::new("element", coerced_to.clone(), true))),
                     true,
                 ),
                 Field::new(

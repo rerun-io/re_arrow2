@@ -204,7 +204,7 @@ fn read_json_records_with_schema() -> Result<()> {
     let schema = Schema {
         fields: vec![Field::new(
             "matrix",
-            DataType::List(Box::new(Field::new("inner", DataType::Float32, false))),
+            DataType::List(Arc::new(Field::new("inner", DataType::Float32, false))),
             false,
         )],
         metadata: Metadata::default(),

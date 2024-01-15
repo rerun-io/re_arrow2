@@ -304,7 +304,7 @@ fn test_map() {
     let map = MapArray::new(
         data_type.clone(),
         offsets.into(),
-        Box::new(fields),
+        Arc::new(fields),
         Some(validity),
     );
 

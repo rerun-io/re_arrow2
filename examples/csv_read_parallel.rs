@@ -18,7 +18,7 @@ fn parallel_read(path: &str) -> Result<Vec<Chunk<Box<dyn Array>>>> {
     let mut reader = read::ReaderBuilder::new().from_path(path)?;
     let (fields, _) =
         read::infer_schema(&mut reader, Some(batch_size * 10), has_header, &read::infer)?;
-    let fields = Box::new(fields);
+    let fields = Arc::new(fields);
 
     let start = SystemTime::now();
     // spawn a thread to produce `Vec<ByteRecords>` (IO bounded)
