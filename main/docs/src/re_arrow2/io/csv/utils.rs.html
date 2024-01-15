@@ -110,7 +110,14 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::datatypes::{DataType, Field, TimeUnit};
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span><span class="kw">crate</span>::datatypes::{DataType, Field, TimeUnit};
 <span class="kw">use </span>ahash::AHashSet;
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>RFC3339: <span class="kw-2">&amp;</span>str = <span class="string">"%Y-%m-%dT%H:%M:%S%.f%:z"</span>;
@@ -139,15 +146,18 @@
     string.parse::&lt;chrono::NaiveDateTime&gt;().is_ok()
 }
 
-<span class="kw">fn </span>is_datetime(string: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<span class="kw">fn </span>is_datetime(string: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;String&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>parsed = chrono::format::Parsed::new();
     <span class="kw">let </span>fmt = chrono::format::StrftimeItems::new(RFC3339);
     <span class="kw">if </span>chrono::format::parse(<span class="kw-2">&amp;mut </span>parsed, string, fmt).is_ok() {
-        parsed.offset.map(|x| {
-            <span class="kw">let </span>hours = x / <span class="number">60 </span>/ <span class="number">60</span>;
-            <span class="kw">let </span>minutes = x / <span class="number">60 </span>- hours * <span class="number">60</span>;
-            <span class="macro">format!</span>(<span class="string">"{hours:03}:{minutes:02}"</span>)
-        })
+        parsed
+            .offset
+            .map(|x| {
+                <span class="kw">let </span>hours = x / <span class="number">60 </span>/ <span class="number">60</span>;
+                <span class="kw">let </span>minutes = x / <span class="number">60 </span>- hours * <span class="number">60</span>;
+                <span class="macro">format!</span>(<span class="string">"{hours:03}:{minutes:02}"</span>)
+            })
+            .map(Arc::new)
     } <span class="kw">else </span>{
         <span class="prelude-val">None
     </span>}

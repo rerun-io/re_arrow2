@@ -257,7 +257,11 @@
 <a href="#255" id="255">255</a>
 <a href="#256" id="256">256</a>
 <a href="#257" id="257">257</a>
-</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use crate</span>::{
     bitmap::Bitmap,
     datatypes::{DataType, Field},
     error::Error,
@@ -287,7 +291,7 @@
 ///     Field::new("c", DataType::Int32, false),
 /// ];
 ///
-/// let array = StructArray::new(DataType::Struct(fields), vec![boolean, int], None);
+/// let array = StructArray::new(DataType::Struct(std::sync::Arc::new(fields)), vec![boolean, int], None);
 /// ```
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>StructArray {
@@ -412,7 +416,7 @@
 </span><span class="kw">impl </span>StructArray {
     <span class="doccomment">/// Deconstructs the [`StructArray`] into its individual components.
     </span><span class="attr">#[must_use]
-    </span><span class="kw">pub fn </span>into_data(<span class="self">self</span>) -&gt; (Vec&lt;Field&gt;, Vec&lt;Box&lt;<span class="kw">dyn </span>Array&gt;&gt;, <span class="prelude-ty">Option</span>&lt;Bitmap&gt;) {
+    </span><span class="kw">pub fn </span>into_data(<span class="self">self</span>) -&gt; (Arc&lt;Vec&lt;Field&gt;&gt;, Vec&lt;Box&lt;<span class="kw">dyn </span>Array&gt;&gt;, <span class="prelude-ty">Option</span>&lt;Bitmap&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{
             data_type,
             values,

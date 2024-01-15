@@ -222,7 +222,11 @@
 <a href="#220" id="220">220</a>
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
-</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use crate</span>::{
     bitmap::Bitmap,
     datatypes::{DataType, Field},
     error::Error,
@@ -427,7 +431,7 @@
 
     <span class="doccomment">/// Returns a [`DataType`] consistent with [`FixedSizeListArray`].
     </span><span class="kw">pub fn </span>default_datatype(data_type: DataType, size: usize) -&gt; DataType {
-        <span class="kw">let </span>field = Box::new(Field::new(<span class="string">"item"</span>, data_type, <span class="bool-val">true</span>));
+        <span class="kw">let </span>field = Arc::new(Field::new(<span class="string">"item"</span>, data_type, <span class="bool-val">true</span>));
         DataType::FixedSizeList(field, size)
     }
 }

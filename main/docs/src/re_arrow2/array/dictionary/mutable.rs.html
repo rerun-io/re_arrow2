@@ -331,7 +331,7 @@
     <span class="kw">fn </span>from_value_map(value_map: ValueMap&lt;K, M&gt;) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>keys = MutablePrimitiveArray::&lt;K&gt;::new();
         <span class="kw">let </span>data_type =
-            DataType::Dictionary(K::KEY_TYPE, Box::new(value_map.data_type().clone()), <span class="bool-val">false</span>);
+            DataType::Dictionary(K::KEY_TYPE, Arc::new(value_map.data_type().clone()), <span class="bool-val">false</span>);
         <span class="self">Self </span>{
             data_type,
             map: value_map,

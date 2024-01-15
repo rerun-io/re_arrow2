@@ -440,7 +440,7 @@
         <span class="self">Self </span>{
             data_type: DataType::Dictionary(
                 IntegerType::Int32,
-                Box::new(values.data_type().clone()),
+                std::sync::Arc::new(values.data_type().clone()),
                 <span class="bool-val">false</span>,
             ),
             keys: MutablePrimitiveArray::&lt;i32&gt;::with_capacity(capacity),

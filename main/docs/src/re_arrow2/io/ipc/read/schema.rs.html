@@ -435,7 +435,14 @@
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>arrow_format::ipc::{
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>arrow_format::ipc::{
     planus::ReadAsRoot, FieldRef, FixedSizeListRef, MapRef, TimeRef, TimestampRef, UnionRef,
 };
 
@@ -541,7 +548,7 @@
 }
 
 <span class="kw">fn </span>deserialize_timestamp(timestamp: TimestampRef) -&gt; <span class="prelude-ty">Result</span>&lt;(DataType, IpcField)&gt; {
-    <span class="kw">let </span>timezone = timestamp.timezone()<span class="question-mark">?</span>.map(|tz| tz.to_string());
+    <span class="kw">let </span>timezone = timestamp.timezone()<span class="question-mark">?</span>.map(|tz| Arc::new(tz.to_string()));
     <span class="kw">let </span>time_unit = deserialize_timeunit(timestamp.unit()<span class="question-mark">?</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((
         DataType::Timestamp(time_unit, timezone),
@@ -568,7 +575,10 @@
         fields: ipc_fields,
         dictionary_id: <span class="prelude-val">None</span>,
     };
-    <span class="prelude-val">Ok</span>((DataType::Union(fields, ids, mode), ipc_field))
+    <span class="prelude-val">Ok</span>((
+        DataType::Union(Arc::new(fields), ids.map(Arc::new), mode),
+        ipc_field,
+    ))
 }
 
 <span class="kw">fn </span>deserialize_map(map: MapRef, field: FieldRef) -&gt; <span class="prelude-ty">Result</span>&lt;(DataType, IpcField)&gt; {
@@ -582,7 +592,7 @@
         .ok_or_else(|| Error::oos(<span class="string">"IPC: Map must contain one child"</span>))<span class="question-mark">??</span>;
     <span class="kw">let </span>(field, ipc_field) = deserialize_field(inner)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>data_type = DataType::Map(Box::new(field), is_sorted);
+    <span class="kw">let </span>data_type = DataType::Map(std::sync::Arc::new(field), is_sorted);
     <span class="prelude-val">Ok</span>((
         data_type,
         IpcField {
@@ -607,7 +617,7 @@
         fields: ipc_fields,
         dictionary_id: <span class="prelude-val">None</span>,
     };
-    <span class="prelude-val">Ok</span>((DataType::Struct(fields), ipc_field))
+    <span class="prelude-val">Ok</span>((DataType::Struct(std::sync::Arc::new(fields)), ipc_field))
 }
 
 <span class="kw">fn </span>deserialize_list(field: FieldRef) -&gt; <span class="prelude-ty">Result</span>&lt;(DataType, IpcField)&gt; {
@@ -620,7 +630,7 @@
     <span class="kw">let </span>(field, ipc_field) = deserialize_field(inner)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((
-        DataType::List(Box::new(field)),
+        DataType::List(std::sync::Arc::new(field)),
         IpcField {
             fields: <span class="macro">vec!</span>[ipc_field],
             dictionary_id: <span class="prelude-val">None</span>,
@@ -638,7 +648,7 @@
     <span class="kw">let </span>(field, ipc_field) = deserialize_field(inner)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((
-        DataType::LargeList(Box::new(field)),
+        DataType::LargeList(std::sync::Arc::new(field)),
         IpcField {
             fields: <span class="macro">vec!</span>[ipc_field],
             dictionary_id: <span class="prelude-val">None</span>,
@@ -664,7 +674,7 @@
         .map_err(|<span class="kw">_</span>| Error::from(OutOfSpecKind::NegativeFooterLength))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((
-        DataType::FixedSizeList(Box::new(field), size),
+        DataType::FixedSizeList(std::sync::Arc::new(field), size),
         IpcField {
             fields: <span class="macro">vec!</span>[ipc_field],
             dictionary_id: <span class="prelude-val">None</span>,
@@ -687,7 +697,7 @@
             <span class="kw">let </span>(inner, <span class="kw-2">mut </span>ipc_field) = get_data_type(field, extension, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
             ipc_field.dictionary_id = <span class="prelude-val">Some</span>(dictionary.id()<span class="question-mark">?</span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>((
-                DataType::Dictionary(index_type, Box::new(inner), dictionary.is_ordered()<span class="question-mark">?</span>),
+                DataType::Dictionary(index_type, Arc::new(inner), dictionary.is_ordered()<span class="question-mark">?</span>),
                 ipc_field,
             ));
         }
@@ -697,7 +707,7 @@
         <span class="kw">let </span>(name, metadata) = extension;
         <span class="kw">let </span>(data_type, fields) = get_data_type(field, <span class="prelude-val">None</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
         <span class="kw">return </span><span class="prelude-val">Ok</span>((
-            DataType::Extension(name, Box::new(data_type), metadata),
+            DataType::Extension(name, Arc::new(data_type), metadata.map(Arc::new)),
             fields,
         ));
     }

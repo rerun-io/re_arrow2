@@ -239,7 +239,15 @@
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Borrow;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>indexmap::map::IndexMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>indexmap::set::IndexSet <span class="kw">as </span>HashSet;
@@ -318,7 +326,7 @@
             <span class="prelude-val">Ok</span>(Field::new(key, dt, <span class="bool-val">true</span>))
         })
         .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(DataType::Struct(fields))
+    <span class="prelude-val">Ok</span>(DataType::Struct(std::sync::Arc::new(fields)))
 }
 
 <span class="kw">fn </span>infer_array(values: <span class="kw-2">&amp;</span>[Value]) -&gt; <span class="prelude-ty">Result</span>&lt;DataType&gt; {
@@ -341,7 +349,7 @@
     </span><span class="prelude-val">Ok</span>(<span class="kw">if </span>dt == DataType::Null {
         dt
     } <span class="kw">else </span>{
-        DataType::List(Box::new(Field::new(ITEM_NAME, dt, <span class="bool-val">true</span>)))
+        DataType::List(std::sync::Arc::new(Field::new(ITEM_NAME, dt, <span class="bool-val">true</span>)))
     })
 }
 
@@ -377,7 +385,7 @@
         <span class="comment">// all are structs =&gt; union of all fields (that may have equal names)
         </span><span class="kw">let </span>fields = datatypes.iter().fold(<span class="macro">vec!</span>[], |<span class="kw-2">mut </span>acc, dt| {
             <span class="kw">if let </span>Struct(new_fields) = dt.borrow() {
-                acc.extend(new_fields);
+                acc.extend(new_fields.as_slice());
             };
             acc
         });
@@ -406,7 +414,7 @@
                 Field::new(name, coerce_data_type(<span class="kw-2">&amp;</span>dts), <span class="bool-val">true</span>)
             })
             .collect();
-        <span class="kw">return </span>Struct(fields);
+        <span class="kw">return </span>Struct(Arc::new(fields));
     } <span class="kw">else if </span>datatypes.len() &gt; <span class="number">2 </span>{
         <span class="kw">return </span>Utf8;
     }
@@ -416,15 +424,15 @@
         (lhs, rhs) <span class="kw">if </span>lhs == rhs =&gt; lhs.clone(),
         (List(lhs), List(rhs)) =&gt; {
             <span class="kw">let </span>inner = coerce_data_type(<span class="kw-2">&amp;</span>[lhs.data_type(), rhs.data_type()]);
-            List(Box::new(Field::new(ITEM_NAME, inner, <span class="bool-val">true</span>)))
+            List(std::sync::Arc::new(Field::new(ITEM_NAME, inner, <span class="bool-val">true</span>)))
         }
         (scalar, List(list)) =&gt; {
             <span class="kw">let </span>inner = coerce_data_type(<span class="kw-2">&amp;</span>[scalar, list.data_type()]);
-            List(Box::new(Field::new(ITEM_NAME, inner, <span class="bool-val">true</span>)))
+            List(std::sync::Arc::new(Field::new(ITEM_NAME, inner, <span class="bool-val">true</span>)))
         }
         (List(list), scalar) =&gt; {
             <span class="kw">let </span>inner = coerce_data_type(<span class="kw-2">&amp;</span>[scalar, list.data_type()]);
-            List(Box::new(Field::new(ITEM_NAME, inner, <span class="bool-val">true</span>)))
+            List(std::sync::Arc::new(Field::new(ITEM_NAME, inner, <span class="bool-val">true</span>)))
         }
         (Float64, Int64) =&gt; Float64,
         (Int64, Float64) =&gt; Float64,
@@ -445,25 +453,31 @@
         <span class="macro">assert_eq!</span>(
             coerce_data_type(<span class="kw-2">&amp;</span>[
                 Float64,
-                List(Box::new(Field::new(ITEM_NAME, Float64, <span class="bool-val">true</span>)))
+                List(std::sync::Arc::new(Field::new(ITEM_NAME, Float64, <span class="bool-val">true</span>)))
             ]),
-            List(Box::new(Field::new(ITEM_NAME, Float64, <span class="bool-val">true</span>))),
+            List(std::sync::Arc::new(Field::new(ITEM_NAME, Float64, <span class="bool-val">true</span>))),
         );
         <span class="macro">assert_eq!</span>(
-            coerce_data_type(<span class="kw-2">&amp;</span>[Float64, List(Box::new(Field::new(ITEM_NAME, Int64, <span class="bool-val">true</span>)))]),
-            List(Box::new(Field::new(ITEM_NAME, Float64, <span class="bool-val">true</span>))),
+            coerce_data_type(<span class="kw-2">&amp;</span>[
+                Float64,
+                List(std::sync::Arc::new(Field::new(ITEM_NAME, Int64, <span class="bool-val">true</span>)))
+            ]),
+            List(std::sync::Arc::new(Field::new(ITEM_NAME, Float64, <span class="bool-val">true</span>))),
         );
         <span class="macro">assert_eq!</span>(
-            coerce_data_type(<span class="kw-2">&amp;</span>[Int64, List(Box::new(Field::new(ITEM_NAME, Int64, <span class="bool-val">true</span>)))]),
-            List(Box::new(Field::new(ITEM_NAME, Int64, <span class="bool-val">true</span>))),
+            coerce_data_type(<span class="kw-2">&amp;</span>[
+                Int64,
+                List(std::sync::Arc::new(Field::new(ITEM_NAME, Int64, <span class="bool-val">true</span>)))
+            ]),
+            List(std::sync::Arc::new(Field::new(ITEM_NAME, Int64, <span class="bool-val">true</span>))),
         );
         <span class="comment">// boolean and number are incompatible, return utf8
         </span><span class="macro">assert_eq!</span>(
             coerce_data_type(<span class="kw-2">&amp;</span>[
                 Boolean,
-                List(Box::new(Field::new(ITEM_NAME, Float64, <span class="bool-val">true</span>)))
+                List(std::sync::Arc::new(Field::new(ITEM_NAME, Float64, <span class="bool-val">true</span>)))
             ]),
-            List(Box::new(Field::new(ITEM_NAME, Utf8, <span class="bool-val">true</span>))),
+            List(std::sync::Arc::new(Field::new(ITEM_NAME, Utf8, <span class="bool-val">true</span>))),
         );
     }
 

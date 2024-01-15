@@ -633,7 +633,25 @@
 <a href="#631" id="631">631</a>
 <a href="#632" id="632">632</a>
 <a href="#633" id="633">633</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{collections::BTreeMap, convert::TryInto, ffi::CStr, ffi::CString, ptr};
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::{collections::BTreeMap, convert::TryInto, ffi::CStr, ffi::CString, ptr, sync::Arc};
 
 <span class="kw">use crate</span>::{
     datatypes::{
@@ -722,7 +740,7 @@
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(extension_metadata) = extension_metadata {
                 metadata.insert(
                     <span class="string">"ARROW:extension:metadata"</span>.to_string(),
-                    extension_metadata.clone(),
+                    extension_metadata.to_string(),
                 );
             }
 
@@ -831,14 +849,18 @@
         <span class="kw">let </span>indices = to_integer_type(schema.format())<span class="question-mark">?</span>;
         <span class="kw">let </span>values = to_field(dictionary)<span class="question-mark">?</span>;
         <span class="kw">let </span>is_ordered = schema.flags &amp; <span class="number">1 </span>== <span class="number">1</span>;
-        DataType::Dictionary(indices, Box::new(values.data_type().clone()), is_ordered)
+        DataType::Dictionary(
+            indices,
+            std::sync::Arc::new(values.data_type().clone()),
+            is_ordered,
+        )
     } <span class="kw">else </span>{
         to_data_type(schema)<span class="question-mark">?
     </span>};
     <span class="kw">let </span>(metadata, extension) = <span class="kw">unsafe </span>{ metadata_from_bytes(schema.metadata) };
 
     <span class="kw">let </span>data_type = <span class="kw">if let </span><span class="prelude-val">Some</span>((name, extension_metadata)) = extension {
-        DataType::Extension(name, Box::new(data_type), extension_metadata)
+        DataType::Extension(name, Arc::new(data_type), extension_metadata.map(Arc::new))
     } <span class="kw">else </span>{
         data_type
     };
@@ -898,23 +920,23 @@
         <span class="string">"tiD" </span>=&gt; DataType::Interval(IntervalUnit::DayTime),
         <span class="string">"+l" </span>=&gt; {
             <span class="kw">let </span>child = schema.child(<span class="number">0</span>);
-            DataType::List(Box::new(to_field(child)<span class="question-mark">?</span>))
+            DataType::List(Arc::new(to_field(child)<span class="question-mark">?</span>))
         }
         <span class="string">"+L" </span>=&gt; {
             <span class="kw">let </span>child = schema.child(<span class="number">0</span>);
-            DataType::LargeList(Box::new(to_field(child)<span class="question-mark">?</span>))
+            DataType::LargeList(Arc::new(to_field(child)<span class="question-mark">?</span>))
         }
         <span class="string">"+m" </span>=&gt; {
             <span class="kw">let </span>child = schema.child(<span class="number">0</span>);
 
             <span class="kw">let </span>is_sorted = (schema.flags &amp; <span class="number">4</span>) != <span class="number">0</span>;
-            DataType::Map(Box::new(to_field(child)<span class="question-mark">?</span>), is_sorted)
+            DataType::Map(std::sync::Arc::new(to_field(child)<span class="question-mark">?</span>), is_sorted)
         }
         <span class="string">"+s" </span>=&gt; {
             <span class="kw">let </span>children = (<span class="number">0</span>..schema.n_children <span class="kw">as </span>usize)
                 .map(|x| to_field(schema.child(x)))
                 .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
-            DataType::Struct(children)
+            DataType::Struct(Arc::new(children))
         }
         other =&gt; {
             <span class="kw">match </span>other.splitn(<span class="number">2</span>, <span class="string">':'</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()[..] {
@@ -925,10 +947,18 @@
                 [<span class="string">"tsn"</span>, <span class="string">""</span>] =&gt; DataType::Timestamp(TimeUnit::Nanosecond, <span class="prelude-val">None</span>),
 
                 <span class="comment">// Timestamps with timezone
-                </span>[<span class="string">"tss"</span>, tz] =&gt; DataType::Timestamp(TimeUnit::Second, <span class="prelude-val">Some</span>(tz.to_string())),
-                [<span class="string">"tsm"</span>, tz] =&gt; DataType::Timestamp(TimeUnit::Millisecond, <span class="prelude-val">Some</span>(tz.to_string())),
-                [<span class="string">"tsu"</span>, tz] =&gt; DataType::Timestamp(TimeUnit::Microsecond, <span class="prelude-val">Some</span>(tz.to_string())),
-                [<span class="string">"tsn"</span>, tz] =&gt; DataType::Timestamp(TimeUnit::Nanosecond, <span class="prelude-val">Some</span>(tz.to_string())),
+                </span>[<span class="string">"tss"</span>, tz] =&gt; {
+                    DataType::Timestamp(TimeUnit::Second, <span class="prelude-val">Some</span>(Arc::new(tz.to_string())))
+                }
+                [<span class="string">"tsm"</span>, tz] =&gt; {
+                    DataType::Timestamp(TimeUnit::Millisecond, <span class="prelude-val">Some</span>(Arc::new(tz.to_string())))
+                }
+                [<span class="string">"tsu"</span>, tz] =&gt; {
+                    DataType::Timestamp(TimeUnit::Microsecond, <span class="prelude-val">Some</span>(Arc::new(tz.to_string())))
+                }
+                [<span class="string">"tsn"</span>, tz] =&gt; {
+                    DataType::Timestamp(TimeUnit::Nanosecond, <span class="prelude-val">Some</span>(Arc::new(tz.to_string())))
+                }
 
                 [<span class="string">"w"</span>, size_raw] =&gt; {
                     <span class="comment">// Example: "w:42" fixed-width binary [42 bytes]
@@ -943,7 +973,7 @@
                         .parse::&lt;usize&gt;()
                         .map_err(|<span class="kw">_</span>| Error::OutOfSpec(<span class="string">"size is not a valid integer"</span>.to_string()))<span class="question-mark">?</span>;
                     <span class="kw">let </span>child = to_field(schema.child(<span class="number">0</span>))<span class="question-mark">?</span>;
-                    DataType::FixedSizeList(Box::new(child), size)
+                    DataType::FixedSizeList(Arc::new(child), size)
                 }
                 [<span class="string">"d"</span>, raw] =&gt; {
                     <span class="comment">// Decimal
@@ -1008,7 +1038,7 @@
                     <span class="kw">let </span>fields = (<span class="number">0</span>..schema.n_children <span class="kw">as </span>usize)
                         .map(|x| to_field(schema.child(x)))
                         .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
-                    DataType::Union(fields, <span class="prelude-val">Some</span>(type_ids), mode)
+                    DataType::Union(Arc::new(fields), <span class="prelude-val">Some</span>(Arc::new(type_ids)), mode)
                 }
                 <span class="kw">_ </span>=&gt; {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::OutOfSpec(<span class="macro">format!</span>(
@@ -1071,7 +1101,7 @@
             <span class="macro">format!</span>(
                 <span class="string">"ts{}:{}"</span>,
                 unit,
-                tz.as_ref().map(|x| x.as_ref()).unwrap_or(<span class="string">""</span>)
+                tz.as_ref().map(|x| x.as_str()).unwrap_or(<span class="string">""</span>)
             )
         }
         DataType::Decimal(precision, scale) =&gt; <span class="macro">format!</span>(<span class="string">"d:{precision},{scale}"</span>),
@@ -1203,40 +1233,43 @@
             DataType::Binary,
             DataType::LargeBinary,
             DataType::FixedSizeBinary(<span class="number">2</span>),
-            DataType::List(Box::new(Field::new(<span class="string">"example"</span>, DataType::Boolean, <span class="bool-val">false</span>))),
-            DataType::FixedSizeList(Box::new(Field::new(<span class="string">"example"</span>, DataType::Boolean, <span class="bool-val">false</span>)), <span class="number">2</span>),
-            DataType::LargeList(Box::new(Field::new(<span class="string">"example"</span>, DataType::Boolean, <span class="bool-val">false</span>))),
-            DataType::Struct(<span class="macro">vec!</span>[
+            DataType::List(Arc::new(Field::new(<span class="string">"example"</span>, DataType::Boolean, <span class="bool-val">false</span>))),
+            DataType::FixedSizeList(Arc::new(Field::new(<span class="string">"example"</span>, DataType::Boolean, <span class="bool-val">false</span>)), <span class="number">2</span>),
+            DataType::LargeList(Arc::new(Field::new(<span class="string">"example"</span>, DataType::Boolean, <span class="bool-val">false</span>))),
+            DataType::Struct(Arc::new(<span class="macro">vec!</span>[
                 Field::new(<span class="string">"a"</span>, DataType::Int64, <span class="bool-val">true</span>),
                 Field::new(
                     <span class="string">"b"</span>,
-                    DataType::List(Box::new(Field::new(<span class="string">"item"</span>, DataType::Int32, <span class="bool-val">true</span>))),
+                    DataType::List(Arc::new(Field::new(<span class="string">"item"</span>, DataType::Int32, <span class="bool-val">true</span>))),
                     <span class="bool-val">true</span>,
                 ),
-            ]),
-            DataType::Map(Box::new(Field::new(<span class="string">"a"</span>, DataType::Int64, <span class="bool-val">true</span>)), <span class="bool-val">true</span>),
+            ])),
+            DataType::Map(
+                std::sync::Arc::new(Field::new(<span class="string">"a"</span>, DataType::Int64, <span class="bool-val">true</span>)),
+                <span class="bool-val">true</span>,
+            ),
             DataType::Union(
-                <span class="macro">vec!</span>[
+                Arc::new(<span class="macro">vec!</span>[
                     Field::new(<span class="string">"a"</span>, DataType::Int64, <span class="bool-val">true</span>),
                     Field::new(
                         <span class="string">"b"</span>,
-                        DataType::List(Box::new(Field::new(<span class="string">"item"</span>, DataType::Int32, <span class="bool-val">true</span>))),
+                        DataType::List(Arc::new(Field::new(<span class="string">"item"</span>, DataType::Int32, <span class="bool-val">true</span>))),
                         <span class="bool-val">true</span>,
                     ),
-                ],
-                <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>]),
+                ]),
+                <span class="prelude-val">Some</span>(Arc::new(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>])),
                 UnionMode::Dense,
             ),
             DataType::Union(
-                <span class="macro">vec!</span>[
+                Arc::new(<span class="macro">vec!</span>[
                     Field::new(<span class="string">"a"</span>, DataType::Int64, <span class="bool-val">true</span>),
                     Field::new(
                         <span class="string">"b"</span>,
-                        DataType::List(Box::new(Field::new(<span class="string">"item"</span>, DataType::Int32, <span class="bool-val">true</span>))),
+                        DataType::List(Arc::new(Field::new(<span class="string">"item"</span>, DataType::Int32, <span class="bool-val">true</span>))),
                         <span class="bool-val">true</span>,
                     ),
-                ],
-                <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>]),
+                ]),
+                <span class="prelude-val">Some</span>(Arc::new(<span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>])),
                 UnionMode::Sparse,
             ),
         ];
@@ -1247,7 +1280,10 @@
             TimeUnit::Nanosecond,
         ] {
             dts.push(DataType::Timestamp(time_unit, <span class="prelude-val">None</span>));
-            dts.push(DataType::Timestamp(time_unit, <span class="prelude-val">Some</span>(<span class="string">"00:00"</span>.to_string())));
+            dts.push(DataType::Timestamp(
+                time_unit,
+                <span class="prelude-val">Some</span>(Arc::new(<span class="string">"00:00"</span>.to_string())),
+            ));
             dts.push(DataType::Duration(time_unit));
         }
         <span class="kw">for </span>interval_type <span class="kw">in </span>[

@@ -334,7 +334,11 @@
 <a href="#332" id="332">332</a>
 <a href="#333" id="333">333</a>
 <a href="#334" id="334">334</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>arrow_format::ipc::planus::Builder;
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>arrow_format::ipc::planus::Builder;
 
 <span class="kw">use </span><span class="kw">crate</span>::datatypes::{
     DataType, Field, IntegerType, IntervalUnit, Metadata, Schema, TimeUnit, UnionMode,
@@ -407,14 +411,14 @@
 
 <span class="kw">fn </span>write_extension(
     name: <span class="kw-2">&amp;</span>str,
-    metadata: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;,
+    metadata: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Arc&lt;String&gt;&gt;,
     kv_vec: <span class="kw-2">&amp;mut </span>Vec&lt;arrow_format::ipc::KeyValue&gt;,
 ) {
     <span class="comment">// metadata
     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(metadata) = metadata {
         <span class="kw">let </span>entry = arrow_format::ipc::KeyValue {
             key: <span class="prelude-val">Some</span>(<span class="string">"ARROW:extension:metadata"</span>.to_string()),
-            value: <span class="prelude-val">Some</span>(metadata.clone()),
+            value: <span class="prelude-val">Some</span>(metadata.to_string()),
         };
         kv_vec.push(entry);
     }
@@ -564,7 +568,7 @@
         })),
         Timestamp(unit, tz) =&gt; ipc::Type::Timestamp(Box::new(ipc::Timestamp {
             unit: serialize_time_unit(unit),
-            timezone: tz.as_ref().cloned(),
+            timezone: tz.as_ref().map(|tz| tz.as_str().to_owned()),
         })),
         Interval(unit) =&gt; ipc::Type::Interval(Box::new(ipc::Interval {
             unit: <span class="kw">match </span>unit {
@@ -583,7 +587,7 @@
                 UnionMode::Dense =&gt; ipc::UnionMode::Dense,
                 UnionMode::Sparse =&gt; ipc::UnionMode::Sparse,
             },
-            type_ids: type_ids.clone(),
+            type_ids: type_ids.as_ref().map(|type_ids| type_ids.to_vec()),
         })),
         Map(<span class="kw">_</span>, keys_sorted) =&gt; ipc::Type::Map(Box::new(ipc::Map {
             keys_sorted: <span class="kw-2">*</span>keys_sorted,

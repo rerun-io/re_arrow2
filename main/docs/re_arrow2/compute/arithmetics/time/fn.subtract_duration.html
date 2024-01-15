@@ -20,7 +20,7 @@ or milliseconds with milliseconds.</p>
 ])
 .to(DataType::Timestamp(
     TimeUnit::Second,
-    <span class="prelude-val">Some</span>(<span class="string">"America/New_York"</span>.to_string()),
+    <span class="prelude-val">Some</span>(std::sync::Arc::new(<span class="string">"America/New_york"</span>.to_string())),
 ));
 
 <span class="kw">let </span>duration = PrimitiveArray::from([<span class="prelude-val">Some</span>(<span class="number">10i64</span>), <span class="prelude-val">Some</span>(<span class="number">20i64</span>), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">30i64</span>)])
@@ -35,7 +35,7 @@ or milliseconds with milliseconds.</p>
 ])
 .to(DataType::Timestamp(
     TimeUnit::Second,
-    <span class="prelude-val">Some</span>(<span class="string">"America/New_York"</span>.to_string()),
+    <span class="prelude-val">Some</span>(std::sync::Arc::new(<span class="string">"America/New_york"</span>.to_string())),
 ));
 
 <span class="macro">assert_eq!</span>(result, expected);

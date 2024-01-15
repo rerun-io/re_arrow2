@@ -455,7 +455,7 @@
             .try_for_each(|(index, (data_type, child))| {
                 <span class="kw">if </span>data_type != child {
                     <span class="prelude-val">Err</span>(Error::oos(<span class="macro">format!</span>(
-                        <span class="string">"The children DataTypes of a UnionArray must equal the children data types. 
+                        <span class="string">"The children DataTypes of a UnionArray must equal the children data types.
                          However, the field {index} has data type {data_type:?} but the value has data type {child:?}"
                     </span>)))
                 } <span class="kw">else </span>{
@@ -734,7 +734,7 @@
     <span class="kw">fn </span>try_get_all(data_type: <span class="kw-2">&amp;</span>DataType) -&gt; <span class="prelude-ty">Result</span>&lt;UnionComponents, Error&gt; {
         <span class="kw">match </span>data_type.to_logical_type() {
             DataType::Union(fields, ids, mode) =&gt; {
-                <span class="prelude-val">Ok</span>((fields, ids.as_ref().map(|x| x.as_ref()), <span class="kw-2">*</span>mode))
+                <span class="prelude-val">Ok</span>((fields, ids.as_ref().map(|x| x.as_slice()), <span class="kw-2">*</span>mode))
             }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::oos(
                 <span class="string">"The UnionArray requires a logical type of DataType::Union"</span>,

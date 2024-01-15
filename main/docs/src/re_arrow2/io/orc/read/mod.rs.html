@@ -353,12 +353,14 @@
 <a href="#351" id="351">351</a>
 <a href="#352" id="352">352</a>
 <a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! APIs to read from [ORC format](https://orc.apache.org).
 </span><span class="kw">use </span>std::io::Read;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span><span class="kw">crate</span>::array::{Array, BinaryArray, BooleanArray, Int64Array, PrimitiveArray, Utf8Array};
 <span class="kw">use </span><span class="kw">crate</span>::bitmap::{Bitmap, MutableBitmap};
-<span class="kw">use </span><span class="kw">crate</span>::datatypes::{DataType, Field, Schema};
+<span class="kw">use </span><span class="kw">crate</span>::datatypes::{ArcExt, DataType, Field, Schema};
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::offset::{Offset, Offsets};
 <span class="kw">use </span><span class="kw">crate</span>::types::NativeType;
@@ -376,7 +378,7 @@
 
     <span class="kw">let </span>dt = infer_dt(<span class="kw-2">&amp;</span>footer.types[<span class="number">0</span>], types)<span class="question-mark">?</span>;
     <span class="kw">if let </span>DataType::Struct(fields) = dt {
-        <span class="prelude-val">Ok</span>(fields.into())
+        <span class="prelude-val">Ok</span>(Arc::unwrap_or_clone_polyfill(fields).into())
     } <span class="kw">else </span>{
         <span class="prelude-val">Err</span>(Error::ExternalFormat(
             <span class="string">"ORC root type must be a struct"</span>.to_string(),
@@ -412,7 +414,7 @@
                     .map(|dt| Field::new(name, dt, <span class="bool-val">true</span>))
                 })
                 .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, Error&gt;&gt;()<span class="question-mark">?</span>;
-            DataType::Struct(sub_types)
+            DataType::Struct(Arc::new(sub_types))
         }
         kind =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::nyi(<span class="macro">format!</span>(<span class="string">"Reading {kind:?} from ORC"</span>))),
     };

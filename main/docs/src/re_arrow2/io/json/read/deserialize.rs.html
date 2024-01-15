@@ -1295,7 +1295,7 @@
     <span class="kw">match </span>json {
         Value::Array(rows) =&gt; <span class="kw">match </span>data_type {
             DataType::List(inner) | DataType::LargeList(inner) =&gt; {
-                <span class="prelude-val">Ok</span>(_deserialize(rows, inner.data_type))
+                <span class="prelude-val">Ok</span>(_deserialize(rows, inner.data_type.clone()))
             }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::nyi(<span class="string">"read an Array from a non-Array data type"</span>)),
         },

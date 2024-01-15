@@ -589,7 +589,9 @@
 <a href="#587" id="587">587</a>
 <a href="#588" id="588">588</a>
 <a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::hash::Hash;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>num_traits::{AsPrimitive, Float, ToPrimitive};
 
@@ -997,7 +999,7 @@
     from: <span class="kw-2">&amp;</span>PrimitiveArray&lt;i64&gt;,
     from_unit: TimeUnit,
     to_unit: TimeUnit,
-    tz: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;,
+    tz: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Arc&lt;String&gt;&gt;,
 ) -&gt; PrimitiveArray&lt;i64&gt; {
     <span class="kw">let </span>from_size = time_unit_multiple(from_unit);
     <span class="kw">let </span>to_size = time_unit_multiple(to_unit);

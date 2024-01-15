@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DataType","IntegerType","IntervalUnit","PhysicalType","TimeUnit","UnionMode"],"fn":["get_extension"],"struct":["Field","Schema"],"type":["Metadata","SchemaRef"]};
+window.SIDEBAR_ITEMS = {"enum":["DataType","IntegerType","IntervalUnit","PhysicalType","TimeUnit","UnionMode"],"fn":["get_extension"],"struct":["Field","Schema"],"trait":["ArcExt"],"type":["Metadata","SchemaRef"]};

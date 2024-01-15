@@ -1425,7 +1425,7 @@
             );
             <span class="kw">let </span>new_values = cast(sliced_values.as_ref(), inner.data_type(), options)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(FixedSizeListArray::new(
-                DataType::FixedSizeList(Box::new(inner.clone()), size),
+                DataType::FixedSizeList(std::sync::Arc::new(inner.clone()), size),
                 new_values,
                 list.validity().cloned(),
             ))

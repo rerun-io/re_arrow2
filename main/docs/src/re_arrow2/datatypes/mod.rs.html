@@ -515,6 +515,65 @@
 <a href="#513" id="513">513</a>
 <a href="#514" id="514">514</a>
 <a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
 </pre></div><pre class="rust"><code><span class="attr">#![forbid(unsafe_code)]
 </span><span class="doccomment">//! Contains all metadata, such as [`PhysicalType`], [`DataType`], [`Field`] and [`Schema`].
 
@@ -536,6 +595,47 @@
 </span><span class="kw">pub type </span>Metadata = BTreeMap&lt;String, String&gt;;
 <span class="doccomment">/// typedef fpr [Option&lt;(String, Option&lt;String&gt;)&gt;] descr
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>Extension = <span class="prelude-ty">Option</span>&lt;(String, <span class="prelude-ty">Option</span>&lt;String&gt;)&gt;;
+
+<span class="doccomment">/// An extension trait to polyfill [`Arc::unwrap_or_clone`] from the nightly stdlib.
+</span><span class="kw">pub trait </span>ArcExt&lt;T&gt; {
+    <span class="doccomment">/// If we have the only reference to `T` then unwrap it. Otherwise, clone `T` and return the
+    /// clone.
+    ///
+    /// Assuming `arc_t` is of type `Arc&lt;T&gt;`, this function is functionally equivalent to
+    /// `(*arc_t).clone()`, but will avoid cloning the inner value where possible.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::{ptr, sync::Arc};
+    /// # use re_arrow2::datatypes::ArcExt;
+    /// let inner = String::from("test");
+    /// let ptr = inner.as_ptr();
+    ///
+    /// let arc = Arc::new(inner);
+    /// let inner = ArcExt::unwrap_or_clone_polyfill(arc);
+    /// // The inner value was not cloned
+    /// assert!(ptr::eq(ptr, inner.as_ptr()));
+    ///
+    /// let arc = Arc::new(inner);
+    /// let arc2 = arc.clone();
+    /// let inner = ArcExt::unwrap_or_clone_polyfill(arc);
+    /// // Because there were 2 references, we had to clone the inner value.
+    /// assert!(!ptr::eq(ptr, inner.as_ptr()));
+    /// // `arc2` is the last reference, so when we unwrap it we get back
+    /// // the original `String`.
+    /// let inner = ArcExt::unwrap_or_clone_polyfill(arc2);
+    /// assert!(ptr::eq(ptr, inner.as_ptr()));
+    /// ```
+    </span><span class="kw">fn </span>unwrap_or_clone_polyfill(this: <span class="self">Self</span>) -&gt; T;
+}
+
+<span class="kw">impl</span>&lt;T: Clone&gt; ArcExt&lt;T&gt; <span class="kw">for </span>Arc&lt;T&gt; {
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>unwrap_or_clone_polyfill(this: <span class="self">Self</span>) -&gt; T {
+        Arc::try_unwrap(this).unwrap_or_else(|arc| (<span class="kw-2">*</span>arc).clone())
+    }
+}
 
 <span class="doccomment">/// The set of supported logical types in this crate.
 ///
@@ -587,7 +687,7 @@
     /// * An absolute time zone offset of the form +XX:XX or -XX:XX, such as +07:30
     /// When the timezone is not specified, the timestamp is considered to have no timezone
     /// and is represented _as is_
-    </span>Timestamp(TimeUnit, <span class="prelude-ty">Option</span>&lt;String&gt;),
+    </span>Timestamp(TimeUnit, <span class="prelude-ty">Option</span>&lt;Arc&lt;String&gt;&gt;),
     <span class="doccomment">/// An [`i32`] representing the elapsed time since UNIX epoch (1970-01-01)
     /// in days.
     </span>Date32,
@@ -617,16 +717,16 @@
     <span class="doccomment">/// A variable-length UTF-8 encoded string whose offsets are represented as [`i64`].
     </span>LargeUtf8,
     <span class="doccomment">/// A list of some logical data type whose offsets are represented as [`i32`].
-    </span>List(Box&lt;Field&gt;),
+    </span>List(Arc&lt;Field&gt;),
     <span class="doccomment">/// A list of some logical data type with a fixed number of elements.
-    </span>FixedSizeList(Box&lt;Field&gt;, usize),
+    </span>FixedSizeList(Arc&lt;Field&gt;, usize),
     <span class="doccomment">/// A list of some logical data type whose offsets are represented as [`i64`].
-    </span>LargeList(Box&lt;Field&gt;),
+    </span>LargeList(Arc&lt;Field&gt;),
     <span class="doccomment">/// A nested [`DataType`] with a given number of [`Field`]s.
-    </span>Struct(Vec&lt;Field&gt;),
+    </span>Struct(Arc&lt;Vec&lt;Field&gt;&gt;),
     <span class="doccomment">/// A nested datatype that can represent slots of differing types.
     /// Third argument represents mode
-    </span>Union(Vec&lt;Field&gt;, <span class="prelude-ty">Option</span>&lt;Vec&lt;i32&gt;&gt;, UnionMode),
+    </span>Union(Arc&lt;Vec&lt;Field&gt;&gt;, <span class="prelude-ty">Option</span>&lt;Arc&lt;Vec&lt;i32&gt;&gt;&gt;, UnionMode),
     <span class="doccomment">/// A nested type that is represented as
     ///
     /// List&lt;entries: Struct&lt;key: K, value: V&gt;&gt;
@@ -652,7 +752,7 @@
     /// The metadata is structured so that Arrow systems without special handling
     /// for Map can make Map an alias for List. The "layout" attribute for the Map
     /// field must have the same contents as a List.
-    </span>Map(Box&lt;Field&gt;, bool),
+    </span>Map(Arc&lt;Field&gt;, bool),
     <span class="doccomment">/// A dictionary encoded array (`key_type`, `value_type`), where
     /// each array element is an index of `key_type` into an
     /// associated dictionary of `value_type`.
@@ -665,7 +765,7 @@
     /// arrays or a limited set of primitive types as integers.
     ///
     /// The `bool` value indicates the `Dictionary` is sorted if set to `true`.
-    </span>Dictionary(IntegerType, Box&lt;DataType&gt;, bool),
+    </span>Dictionary(IntegerType, Arc&lt;DataType&gt;, bool),
     <span class="doccomment">/// Decimal value with precision and scale
     /// precision is the number of digits in the number and
     /// scale is the number of decimal places.
@@ -674,7 +774,7 @@
     <span class="doccomment">/// Decimal backed by 256 bits
     </span>Decimal256(usize, usize),
     <span class="doccomment">/// Extension type.
-    </span>Extension(String, Box&lt;DataType&gt;, <span class="prelude-ty">Option</span>&lt;String&gt;),
+    </span>Extension(String, Arc&lt;DataType&gt;, <span class="prelude-ty">Option</span>&lt;Arc&lt;String&gt;&gt;),
 }
 
 <span class="attr">#[cfg(feature = <span class="string">"arrow"</span>)]
@@ -697,7 +797,10 @@
             DataType::Float16 =&gt; <span class="self">Self</span>::Float16,
             DataType::Float32 =&gt; <span class="self">Self</span>::Float32,
             DataType::Float64 =&gt; <span class="self">Self</span>::Float64,
-            DataType::Timestamp(unit, tz) =&gt; <span class="self">Self</span>::Timestamp(unit.into(), tz.map(Into::into)),
+            DataType::Timestamp(unit, tz) =&gt; <span class="self">Self</span>::Timestamp(
+                unit.into(),
+                tz.map(Arc::unwrap_or_clone_polyfill).map(Into::into),
+            ),
             DataType::Date32 =&gt; <span class="self">Self</span>::Date32,
             DataType::Date64 =&gt; <span class="self">Self</span>::Date64,
             DataType::Time32(unit) =&gt; <span class="self">Self</span>::Time32(unit.into()),
@@ -709,30 +812,45 @@
             DataType::LargeBinary =&gt; <span class="self">Self</span>::LargeBinary,
             DataType::Utf8 =&gt; <span class="self">Self</span>::Utf8,
             DataType::LargeUtf8 =&gt; <span class="self">Self</span>::LargeUtf8,
-            DataType::List(f) =&gt; <span class="self">Self</span>::List(Arc::new((<span class="kw-2">*</span>f).into())),
+            DataType::List(f) =&gt; <span class="self">Self</span>::List(Arc::new(Arc::unwrap_or_clone_polyfill(f).into())),
             DataType::FixedSizeList(f, size) =&gt; {
-                <span class="self">Self</span>::FixedSizeList(Arc::new((<span class="kw-2">*</span>f).into()), size <span class="kw">as _</span>)
+                <span class="self">Self</span>::FixedSizeList(Arc::new(Arc::unwrap_or_clone_polyfill(f).into()), size <span class="kw">as _</span>)
             }
-            DataType::LargeList(f) =&gt; <span class="self">Self</span>::LargeList(Arc::new((<span class="kw-2">*</span>f).into())),
-            DataType::Struct(f) =&gt; <span class="self">Self</span>::Struct(f.into_iter().map(ArrowField::from).collect()),
+            DataType::LargeList(f) =&gt; {
+                <span class="self">Self</span>::LargeList(Arc::new(Arc::unwrap_or_clone_polyfill(f).into()))
+            }
+            DataType::Struct(f) =&gt; <span class="self">Self</span>::Struct(
+                Arc::unwrap_or_clone_polyfill(f)
+                    .into_iter()
+                    .map(ArrowField::from)
+                    .collect(),
+            ),
             DataType::Union(fields, <span class="prelude-val">Some</span>(ids), mode) =&gt; {
-                <span class="kw">let </span>ids = ids.into_iter().map(|x| x <span class="kw">as _</span>);
-                <span class="kw">let </span>fields = fields.into_iter().map(ArrowField::from);
+                <span class="kw">let </span>ids = Arc::unwrap_or_clone_polyfill(ids)
+                    .into_iter()
+                    .map(|x| x <span class="kw">as _</span>);
+                <span class="kw">let </span>fields = Arc::unwrap_or_clone_polyfill(fields)
+                    .into_iter()
+                    .map(ArrowField::from);
                 <span class="self">Self</span>::Union(UnionFields::new(ids, fields), mode.into())
             }
             DataType::Union(fields, <span class="prelude-val">None</span>, mode) =&gt; {
                 <span class="kw">let </span>ids = <span class="number">0</span>..fields.len() <span class="kw">as </span>i8;
-                <span class="kw">let </span>fields = fields.into_iter().map(ArrowField::from);
+                <span class="kw">let </span>fields = Arc::unwrap_or_clone_polyfill(fields)
+                    .into_iter()
+                    .map(ArrowField::from);
                 <span class="self">Self</span>::Union(UnionFields::new(ids, fields), mode.into())
             }
-            DataType::Map(f, ordered) =&gt; <span class="self">Self</span>::Map(Arc::new((<span class="kw-2">*</span>f).into()), ordered),
+            DataType::Map(f, ordered) =&gt; {
+                <span class="self">Self</span>::Map(Arc::new(Arc::unwrap_or_clone_polyfill(f).into()), ordered)
+            }
             DataType::Dictionary(key, value, <span class="kw">_</span>) =&gt; <span class="self">Self</span>::Dictionary(
                 Box::new(DataType::from(key).into()),
-                Box::new((<span class="kw-2">*</span>value).into()),
+                Box::new(Arc::unwrap_or_clone_polyfill(value).into()),
             ),
             DataType::Decimal(precision, scale) =&gt; <span class="self">Self</span>::Decimal128(precision <span class="kw">as _</span>, scale <span class="kw">as _</span>),
             DataType::Decimal256(precision, scale) =&gt; <span class="self">Self</span>::Decimal256(precision <span class="kw">as _</span>, scale <span class="kw">as _</span>),
-            DataType::Extension(<span class="kw">_</span>, d, <span class="kw">_</span>) =&gt; (<span class="kw-2">*</span>d).into(),
+            DataType::Extension(<span class="kw">_</span>, d, <span class="kw">_</span>) =&gt; Arc::unwrap_or_clone_polyfill(d).into(),
         }
     }
 }
@@ -756,7 +874,7 @@
             DataType::Float32 =&gt; <span class="self">Self</span>::Float32,
             DataType::Float64 =&gt; <span class="self">Self</span>::Float64,
             DataType::Timestamp(unit, tz) =&gt; {
-                <span class="self">Self</span>::Timestamp(unit.into(), tz.map(|x| x.to_string()))
+                <span class="self">Self</span>::Timestamp(unit.into(), tz.map(|tz| Arc::new(tz.to_string())))
             }
             DataType::Date32 =&gt; <span class="self">Self</span>::Date32,
             DataType::Date64 =&gt; <span class="self">Self</span>::Date64,
@@ -769,16 +887,16 @@
             DataType::LargeBinary =&gt; <span class="self">Self</span>::LargeBinary,
             DataType::Utf8 =&gt; <span class="self">Self</span>::Utf8,
             DataType::LargeUtf8 =&gt; <span class="self">Self</span>::LargeUtf8,
-            DataType::List(f) =&gt; <span class="self">Self</span>::List(Box::new(f.into())),
-            DataType::FixedSizeList(f, size) =&gt; <span class="self">Self</span>::FixedSizeList(Box::new(f.into()), size <span class="kw">as _</span>),
-            DataType::LargeList(f) =&gt; <span class="self">Self</span>::LargeList(Box::new(f.into())),
-            DataType::Struct(f) =&gt; <span class="self">Self</span>::Struct(f.into_iter().map(Into::into).collect()),
+            DataType::List(f) =&gt; <span class="self">Self</span>::List(Arc::new(f.into())),
+            DataType::FixedSizeList(f, size) =&gt; <span class="self">Self</span>::FixedSizeList(Arc::new(f.into()), size <span class="kw">as _</span>),
+            DataType::LargeList(f) =&gt; <span class="self">Self</span>::LargeList(Arc::new(f.into())),
+            DataType::Struct(f) =&gt; <span class="self">Self</span>::Struct(Arc::new(f.into_iter().map(Into::into).collect())),
             DataType::Union(fields, mode) =&gt; {
-                <span class="kw">let </span>ids = fields.iter().map(|(x, <span class="kw">_</span>)| x <span class="kw">as _</span>).collect();
-                <span class="kw">let </span>fields = fields.iter().map(|(<span class="kw">_</span>, f)| f.into()).collect();
+                <span class="kw">let </span>ids = Arc::new(fields.iter().map(|(x, <span class="kw">_</span>)| x <span class="kw">as _</span>).collect());
+                <span class="kw">let </span>fields = Arc::new(fields.iter().map(|(<span class="kw">_</span>, f)| f.into()).collect());
                 <span class="self">Self</span>::Union(fields, <span class="prelude-val">Some</span>(ids), mode.into())
             }
-            DataType::Map(f, ordered) =&gt; <span class="self">Self</span>::Map(Box::new(f.into()), ordered),
+            DataType::Map(f, ordered) =&gt; <span class="self">Self</span>::Map(std::sync::Arc::new(f.into()), ordered),
             DataType::Dictionary(key, value) =&gt; {
                 <span class="kw">let </span>key = <span class="kw">match </span><span class="kw-2">*</span>key {
                     DataType::Int8 =&gt; IntegerType::Int8,
@@ -791,7 +909,7 @@
                     DataType::UInt64 =&gt; IntegerType::UInt64,
                     d =&gt; <span class="macro">panic!</span>(<span class="string">"illegal dictionary key type: {d}"</span>),
                 };
-                <span class="self">Self</span>::Dictionary(key, Box::new((<span class="kw-2">*</span>value).into()), <span class="bool-val">false</span>)
+                <span class="self">Self</span>::Dictionary(key, Arc::new((<span class="kw-2">*</span>value).into()), <span class="bool-val">false</span>)
             }
             DataType::Decimal128(precision, scale) =&gt; <span class="self">Self</span>::Decimal(precision <span class="kw">as _</span>, scale <span class="kw">as _</span>),
             DataType::Decimal256(precision, scale) =&gt; <span class="self">Self</span>::Decimal256(precision <span class="kw">as _</span>, scale <span class="kw">as _</span>),

@@ -145,7 +145,11 @@
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>avro_schema::schema::{Enum, Fixed, Record, Schema <span class="kw">as </span>AvroSchema};
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>avro_schema::schema::{Enum, Fixed, Record, Schema <span class="kw">as </span>AvroSchema};
 
 <span class="kw">use </span><span class="kw">crate</span>::datatypes::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, <span class="prelude-ty">Result</span>};
@@ -199,10 +203,10 @@
             <span class="prelude-val">Some</span>(logical) =&gt; <span class="kw">match </span>logical {
                 avro_schema::schema::LongLogical::Time =&gt; DataType::Time64(TimeUnit::Microsecond),
                 avro_schema::schema::LongLogical::TimestampMillis =&gt; {
-                    DataType::Timestamp(TimeUnit::Millisecond, <span class="prelude-val">Some</span>(<span class="string">"00:00"</span>.to_string()))
+                    DataType::Timestamp(TimeUnit::Millisecond, <span class="prelude-val">Some</span>(Arc::new(<span class="string">"00:00"</span>.to_string())))
                 }
                 avro_schema::schema::LongLogical::TimestampMicros =&gt; {
-                    DataType::Timestamp(TimeUnit::Microsecond, <span class="prelude-val">Some</span>(<span class="string">"00:00"</span>.to_string()))
+                    DataType::Timestamp(TimeUnit::Microsecond, <span class="prelude-val">Some</span>(Arc::new(<span class="string">"00:00"</span>.to_string())))
                 }
                 avro_schema::schema::LongLogical::LocalTimestampMillis =&gt; {
                     DataType::Timestamp(TimeUnit::Millisecond, <span class="prelude-val">None</span>)
@@ -224,7 +228,7 @@
             <span class="prelude-val">None </span>=&gt; DataType::Binary,
         },
         AvroSchema::String(<span class="kw">_</span>) =&gt; DataType::Utf8,
-        AvroSchema::Array(item_schema) =&gt; DataType::List(Box::new(schema_to_field(
+        AvroSchema::Array(item_schema) =&gt; DataType::List(std::sync::Arc::new(schema_to_field(
             item_schema,
             <span class="prelude-val">Some</span>(<span class="string">"item"</span>), <span class="comment">// default name for list items
             </span>Metadata::default(),
@@ -250,7 +254,7 @@
                     .iter()
                     .map(|s| schema_to_field(s, <span class="prelude-val">None</span>, Metadata::default()))
                     .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Field&gt;&gt;&gt;()<span class="question-mark">?</span>;
-                DataType::Union(fields, <span class="prelude-val">None</span>, UnionMode::Dense)
+                DataType::Union(Arc::new(fields), <span class="prelude-val">None</span>, UnionMode::Dense)
             }
         }
         AvroSchema::Record(Record { fields, .. }) =&gt; {
@@ -264,12 +268,12 @@
                     schema_to_field(<span class="kw-2">&amp;</span>field.schema, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>field.name), props)
                 })
                 .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
-            DataType::Struct(fields)
+            DataType::Struct(std::sync::Arc::new(fields))
         }
         AvroSchema::Enum { .. } =&gt; {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(Field::new(
                 name.unwrap_or_default(),
-                DataType::Dictionary(IntegerType::Int32, Box::new(DataType::Utf8), <span class="bool-val">false</span>),
+                DataType::Dictionary(IntegerType::Int32, Arc::new(DataType::Utf8), <span class="bool-val">false</span>),
                 <span class="bool-val">false</span>,
             ))
         }

@@ -415,9 +415,7 @@
 <a href="#413" id="413">413</a>
 <a href="#414" id="414">414</a>
 <a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::hash::Hash;
-<span class="kw">use </span>std::hint::unreachable_unchecked;
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::{hash::Hash, hint::unreachable_unchecked, sync::Arc};
 
 <span class="kw">use crate</span>::{
     bitmap::{
@@ -710,7 +708,7 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>default_data_type(values_datatype: DataType) -&gt; DataType {
-        DataType::Dictionary(K::KEY_TYPE, Box::new(values_datatype), <span class="bool-val">false</span>)
+        DataType::Dictionary(K::KEY_TYPE, Arc::new(values_datatype), <span class="bool-val">false</span>)
     }
 
     <span class="doccomment">/// Slices this [`DictionaryArray`].
