@@ -12,7 +12,7 @@ authors = [
 ]
 keywords = ["arrow", "analytics"]
 edition = "2021"
-rust-version = "1.72"
+rust-version = "1.76"
 exclude = ["testing/"]
 
 [lib]
