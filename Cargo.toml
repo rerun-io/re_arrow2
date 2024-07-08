@@ -410,3 +410,7 @@ harness = false
 [[bench]]
 name = "like_kernels"
 harness = false
+
+[[bench]]
+name = "arrrow2arrow"
+harness = false
