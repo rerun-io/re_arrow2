@@ -306,6 +306,14 @@ rustc_version = "0.4.0"
 [package.metadata.cargo-all-features]
 allowlist = ["compute", "compute_sort", "compute_hash", "compute_nullif"]
 
+# ---------------------------------------------------------------------------------
+
+[lints.clippy]
+blocks_in_conditions = "allow"
+manual_hash_one = "allow"
+
+# ---------------------------------------------------------------------------------
+
 [[bench]]
 name = "take_kernels"
 harness = false
