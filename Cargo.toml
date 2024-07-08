@@ -308,9 +308,15 @@ allowlist = ["compute", "compute_sort", "compute_hash", "compute_nullif"]
 
 # ---------------------------------------------------------------------------------
 
+[lints.rust]
+unused_imports = "allow"
+
 [lints.clippy]
 blocks_in_conditions = "allow"
+items_after_test_module = "allow"
 manual_hash_one = "allow"
+non_canonical_partial_ord_impl = "allow"
+redundant_guards = "allow"
 
 # ---------------------------------------------------------------------------------
 

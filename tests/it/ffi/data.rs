@@ -342,7 +342,7 @@ fn extension() -> Result<()> {
         DataType::Extension(
             "a".to_string(),
             Arc::new(DataType::Int32),
-            Some("bla".to_string()).map(Arc::new),
+            Some(Arc::new("bla".to_string())),
         ),
         true,
     );
