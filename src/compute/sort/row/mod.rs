@@ -260,6 +260,10 @@ pub struct Rows {
 
 impl Rows {
     /// Get a reference to a certain row.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `row` is out of bounds
     pub fn row(&self, row: usize) -> Row<'_> {
         let end = self.offsets[row + 1];
         let start = self.offsets[row];
@@ -269,7 +273,12 @@ impl Rows {
     }
 
     /// Get a reference to a certain row but not check the bounds.
-    pub fn row_unchecked(&self, row: usize) -> Row<'_> {
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that `row` is within bounds
+    pub unsafe fn row_unchecked(&self, row: usize) -> Row<'_> {
+        debug_assert!(row < self.len(), "out-of-bounds access");
         let data = unsafe {
             let end = *self.offsets.get_unchecked(row + 1);
             let start = *self.offsets.get_unchecked(row);
@@ -319,7 +328,7 @@ impl<'a> Iterator for RowsIter<'a> {
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.start < self.end {
-            let row = self.rows.row_unchecked(self.start);
+            let row = unsafe { self.rows.row_unchecked(self.start) };
             self.start += 1;
             Some(row)
         } else {
