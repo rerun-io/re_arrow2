@@ -275,6 +275,7 @@ impl From<DataType> for arrow_schema::DataType {
             DataType::Decimal(precision, scale) => Self::Decimal128(precision as _, scale as _),
             DataType::Decimal256(precision, scale) => Self::Decimal256(precision as _, scale as _),
             DataType::Extension(_, d, _) => Arc::unwrap_or_clone_polyfill(d).into(),
+            _ => unimplemented!("TODO"),
         }
     }
 }
