@@ -60,7 +60,8 @@ impl<'a, T: NativeType> GrowablePrimitive<'a, T> {
     #[inline]
     fn to(&mut self) -> PrimitiveArray<T> {
         let validity = std::mem::take(&mut self.validity);
-        let values = std::mem::take(&mut self.values);
+        let mut values = std::mem::take(&mut self.values);
+        values.shrink_to_fit();
 
         PrimitiveArray::<T>::new(self.data_type.clone(), values.into(), validity.into())
     }
@@ -100,7 +101,9 @@ impl<'a, T: NativeType> Growable<'a> for GrowablePrimitive<'a, T> {
 
 impl<'a, T: NativeType> From<GrowablePrimitive<'a, T>> for PrimitiveArray<T> {
     #[inline]
-    fn from(val: GrowablePrimitive<'a, T>) -> Self {
-        PrimitiveArray::<T>::new(val.data_type, val.values.into(), val.validity.into())
+    fn from(mut val: GrowablePrimitive<'a, T>) -> Self {
+        let mut values = std::mem::take(&mut val.values);
+        values.shrink_to_fit();
+        PrimitiveArray::<T>::new(val.data_type, values.into(), val.validity.into())
     }
 }
