@@ -1,6 +1,6 @@
 [package]
 name = "re_arrow2"
-version = "0.17.4"
+version = "0.17.5"
 license = "Apache-2.0"
 description = "Unofficial implementation of Apache Arrow spec in safe Rust"
 homepage = "https://github.com/rerun-io/re_arrow2"
