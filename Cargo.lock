@@ -2190,7 +2190,7 @@ dependencies = [
 
 [[package]]
 name = "re_arrow2"
-version = "0.17.5"
+version = "0.17.6"
 dependencies = [
  "ahash",
  "arrow-array",
