@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+- BREAKING: Switch to using `half::f16` [#12](https://github.com/rerun-io/re_arrow2/pull/12)
+
+
 ## [v0.17.0](https://github.com/jorgecarleitao/arrow2/tree/v0.17.0) (2023-03-27)
 
 [Full Changelog](https://github.com/jorgecarleitao/arrow2/compare/v0.16.0...v0.17.0)
