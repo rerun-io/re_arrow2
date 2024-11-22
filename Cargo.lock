@@ -1112,6 +1112,7 @@ version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "02b4af3693f1b705df946e9fe5631932443781d0aabb423b62fcd4d73f6d2fd0"
 dependencies = [
+ "bytemuck",
  "crunchy",
  "num-traits",
 ]
@@ -2220,6 +2221,7 @@ dependencies = [
  "foreign_vec",
  "futures",
  "getrandom 0.2.8",
+ "half 2.2.1",
  "hash_hasher",
  "hashbrown 0.14.3",
  "hex",

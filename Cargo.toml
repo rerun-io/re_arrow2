@@ -118,6 +118,8 @@ arrow-schema = { version = ">=52", optional = true }
 arrow-data = { version = ">=52", optional = true }
 arrow-array = { version = ">=52", optional = true }
 
+half = { version = "2.2", features = ["bytemuck"] }
+
 [target.wasm32-unknown-unknown.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
 
