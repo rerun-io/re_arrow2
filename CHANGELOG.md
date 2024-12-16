@@ -1,7 +1,9 @@
 # Changelog
 
 ## Unreleased
-- BREAKING: Switch to using `half::f16` [#12](https://github.com/rerun-io/re_arrow2/pull/12)
+## 0.18.0 2024-12-16
+- Bump minimum versions of arrow to 52 [#11](https://github.com/rerun-io/re_arrow2/pull/11)
+- Switch to using `half::f16` [#12](https://github.com/rerun-io/re_arrow2/pull/12)
 
 
 ## [v0.17.0](https://github.com/jorgecarleitao/arrow2/tree/v0.17.0) (2023-03-27)
