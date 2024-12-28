@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+
+## 0.18.1 2024-12-28
+- Pin arrow-dependencies to version 52 or 53 [#13](https://github.com/rerun-io/re_arrow2/pull/13)
+
+
 ## 0.18.0 2024-12-16
 - Bump minimum versions of arrow to 52 [#11](https://github.com/rerun-io/re_arrow2/pull/11)
 - Switch to using `half::f16` [#12](https://github.com/rerun-io/re_arrow2/pull/12)
