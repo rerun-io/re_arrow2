@@ -98,6 +98,17 @@ impl Bitmap {
         })
     }
 
+    /// Convert from `arrow-rs` `NullBuffer`
+    #[cfg(feature = "arrow")]
+    pub fn from_arrow(nulls: arrow_buffer::buffer::NullBuffer) -> Self {
+        let offset = nulls.offset();
+        let len = nulls.len();
+        let null_count = nulls.null_count();
+        let bytes = crate::buffer::to_bytes(nulls.into_inner().into_inner());
+        // SAFETY: the invariants are held by the input
+        unsafe { Self::from_inner_unchecked(bytes.into(), offset, len, null_count) }
+    }
+
     /// Returns the length of the [`Bitmap`].
     #[inline]
     pub fn len(&self) -> usize {
@@ -490,4 +501,33 @@ impl From<Bitmap> for arrow_buffer::buffer::NullBuffer {
         // Safety: null count is accurate
         unsafe { arrow_buffer::buffer::NullBuffer::new_unchecked(buffer, null_count) }
     }
+}
+
+// // Can't implement this because of `impl<P: AsRef<[bool]>> From<P> for Bitmap`
+// #[cfg(feature = "arrow")]
+// impl From<arrow_buffer::buffer::NullBuffer> for Bitmap {
+//     fn from(value: arrow_buffer::buffer::NullBuffer) -> Self {
+//         let buffer = value.buffer.into();
+//         let null_count = value.null_count;
+//         // Safety: null count is accurate
+//         unsafe { Self::from_unchecked(buffer, null_count) }
+//     }
+// }
+
+#[cfg(feature = "arrow")]
+#[test]
+fn test_arrow_nullbuffer_conversion() {
+    let mut bitmap2 = Bitmap::from([false, true, false, false, true, false, false, false, true]);
+    bitmap2.slice(1, 6);
+
+    assert_eq!(
+        bitmap2,
+        Bitmap::from([true, false, false, true, false, false])
+    );
+
+    let nulls1 = arrow_buffer::buffer::NullBuffer::from(bitmap2.clone());
+    assert_eq!(nulls1.null_count(), bitmap2.null_count());
+
+    let back_again = Bitmap::from_arrow(nulls1);
+    assert_eq!(back_again, bitmap2);
 }
