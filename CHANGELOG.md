@@ -1,6 +1,10 @@
 # Changelog
 
 
+## Unreleased
+- Update to arrow 54 [#14](https://github.com/rerun-io/re_arrow2/pull/14)
+
+
 ## 0.18.1 2024-12-28
 - Pin arrow-dependencies to version 52 or 53 [#13](https://github.com/rerun-io/re_arrow2/pull/13)
 
