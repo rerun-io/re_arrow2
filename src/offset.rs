@@ -548,7 +548,7 @@ impl<O: Offset + arrow_buffer::ArrowNativeType> From<arrow_buffer::OffsetBuffer<
     for OffsetsBuffer<O>
 {
     fn from(offset_buffer2: arrow_buffer::OffsetBuffer<O>) -> Self {
-        let buffer1: arrow_buffer::Buffer = offset_buffer2.into_inner().into_inner().into();
+        let buffer1: arrow_buffer::Buffer = offset_buffer2.into_inner().into_inner();
         // SAFETY: the input buffer is guaranteed to be valid
         unsafe { Self::new_unchecked(buffer1.into()) }
     }

@@ -249,7 +249,7 @@ impl<O: Offset + arrow_array::OffsetSizeTrait> From<ListArray<O>>
     for arrow_array::GenericListArray<O>
 {
     fn from(value: ListArray<O>) -> Self {
-        let field = ListArray::<O>::get_child_field(&value.data_type());
+        let field = ListArray::<O>::get_child_field(value.data_type());
         let field = Arc::new(arrow_schema::Field::new(
             "item",
             field.clone().data_type.into(),
@@ -282,6 +282,7 @@ impl<O: Offset + arrow_array::OffsetSizeTrait> From<arrow_array::GenericListArra
 #[cfg(feature = "arrow")]
 #[test]
 fn test_arrow_list_array_conversion_non_null() {
+    #![allow(clippy::zero_prefixed_literal)]
     /*
     We build this:
 
@@ -330,6 +331,7 @@ fn test_arrow_list_array_conversion_non_null() {
 #[cfg(feature = "arrow")]
 #[test]
 fn test_arrow_list_array_conversion_nullable() {
+    #![allow(clippy::zero_prefixed_literal)]
     /*
     We build this:
 
