@@ -1,6 +1,5 @@
 use std::{iter::FromIterator, ops::Deref, sync::Arc, usize};
 
-use arrow_buffer::ArrowNativeType;
 use either::Either;
 
 use crate::types::NativeType;
