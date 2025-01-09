@@ -541,3 +541,47 @@ impl<O: Offset> std::ops::Deref for OffsetsBuffer<O> {
         self.0.as_slice()
     }
 }
+
+/// arrow1 -> arrow2
+#[cfg(feature = "arrow")]
+impl<O: Offset + arrow_buffer::ArrowNativeType> From<arrow_buffer::OffsetBuffer<O>>
+    for OffsetsBuffer<O>
+{
+    fn from(offset_buffer2: arrow_buffer::OffsetBuffer<O>) -> Self {
+        let buffer1: arrow_buffer::Buffer = offset_buffer2.into_inner().into_inner();
+        // SAFETY: the input buffer is guaranteed to be valid
+        unsafe { Self::new_unchecked(buffer1.into()) }
+    }
+}
+
+/// arrow2 -> arrow1
+#[cfg(feature = "arrow")]
+impl<O: Offset + arrow_buffer::ArrowNativeType> From<OffsetsBuffer<O>>
+    for arrow_buffer::OffsetBuffer<O>
+{
+    fn from(offsets_buffer: OffsetsBuffer<O>) -> Self {
+        let num_elements = offsets_buffer.len();
+        Self::new(arrow_buffer::ScalarBuffer::new(
+            offsets_buffer.into_inner().into(),
+            0,
+            num_elements,
+        ))
+    }
+}
+
+#[cfg(feature = "arrow")]
+#[test]
+fn test_arrow_offsets_buffer_conversion() {
+    let mut arrow2_offsets =
+        OffsetsBuffer::<i32>::from(Offsets::try_from(vec![0, 1, 3, 3, 12, 42]).unwrap());
+    arrow2_offsets.slice(1, 4);
+
+    assert_eq!(arrow2_offsets.as_slice(), [1, 3, 3, 12]);
+
+    let arrow1_offsets: arrow_buffer::OffsetBuffer<i32> = arrow2_offsets.clone().into();
+    assert_eq!(arrow1_offsets.as_ref(), [1, 3, 3, 12]);
+
+    let back_again = OffsetsBuffer::from(arrow1_offsets);
+    assert_eq!(back_again, arrow2_offsets);
+    assert_eq!(back_again.as_slice(), [1, 3, 3, 12]);
+}
