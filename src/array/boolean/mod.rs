@@ -384,3 +384,49 @@ impl Array for BooleanArray {
         Box::new(self.clone().with_validity(validity))
     }
 }
+
+/// arrow2 -> arrow
+#[cfg(feature = "arrow")]
+impl From<BooleanArray> for arrow_array::BooleanArray {
+    fn from(array: BooleanArray) -> Self {
+        Self::new(
+            array.values().clone().into(),
+            array.validity().cloned().map(|bitmap| bitmap.into()),
+        )
+    }
+}
+
+// Conflicts with `impl<P: AsRef<[Option<bool>]>> From<P> for BooleanArra`
+// impl From<arrow_array::BooleanArray> for BooleanArray {
+
+#[cfg(feature = "arrow")]
+impl BooleanArray {
+    /// arrow-rs -> arrow2
+    pub fn from_arrow(array: arrow_array::BooleanArray) -> Self {
+        let (values, nulls) = array.into_parts();
+        Self::new(
+            DataType::Boolean,
+            Bitmap::from_arrow(values.into()),
+            nulls.map(Bitmap::from_arrow),
+        )
+    }
+}
+
+#[cfg(feature = "arrow")]
+#[test]
+fn test_boolean_array_arrow_conversion() {
+    use arrow_array::Array;
+
+    let original =
+        BooleanArray::from([Some(true), Some(false), None, Some(true), Some(false)]).sliced(1, 3);
+
+    let arrow: arrow_array::BooleanArray = original.clone().into();
+    assert_eq!(arrow.len(), 3);
+    assert_eq!(arrow.value(0), false);
+    // assert_eq!(arrow.value(1), false); // could be anything
+    assert_eq!(arrow.value(2), true);
+    assert_eq!(original.null_count(), arrow.null_count());
+
+    let roundtripped = BooleanArray::from_arrow(arrow);
+    assert_eq!(roundtripped, original);
+}

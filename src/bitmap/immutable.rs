@@ -494,12 +494,19 @@ impl IntoIterator for Bitmap {
 
 #[cfg(feature = "arrow")]
 impl From<Bitmap> for arrow_buffer::buffer::NullBuffer {
-    fn from(value: Bitmap) -> Self {
-        let null_count = value.unset_bits;
-        let buffer = crate::buffer::to_buffer(value.bytes);
-        let buffer = arrow_buffer::buffer::BooleanBuffer::new(buffer, value.offset, value.length);
+    fn from(bitmap: Bitmap) -> Self {
+        let null_count = bitmap.unset_bits;
+        let buffer = arrow_buffer::buffer::BooleanBuffer::from(bitmap);
         // Safety: null count is accurate
         unsafe { arrow_buffer::buffer::NullBuffer::new_unchecked(buffer, null_count) }
+    }
+}
+
+#[cfg(feature = "arrow")]
+impl From<Bitmap> for arrow_buffer::buffer::BooleanBuffer {
+    fn from(value: Bitmap) -> Self {
+        let buffer = crate::buffer::to_buffer(value.bytes);
+        arrow_buffer::buffer::BooleanBuffer::new(buffer, value.offset, value.length)
     }
 }
 
