@@ -252,7 +252,7 @@ impl<O: Offset + arrow_array::OffsetSizeTrait> From<ListArray<O>>
         let field = ListArray::<O>::get_child_field(value.data_type());
         let field = Arc::new(arrow_schema::Field::new(
             "item",
-            field.clone().data_type.into(),
+            field.data_type.clone().into(),
             field.is_nullable,
         ));
         let offsets = value.offsets().clone().into();
