@@ -415,6 +415,8 @@ impl BooleanArray {
 #[cfg(feature = "arrow")]
 #[test]
 fn test_boolean_array_arrow_conversion() {
+    #![allow(clippy::bool_assert_comparison)]
+
     use arrow_array::Array;
 
     let original =
