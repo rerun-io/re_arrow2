@@ -2,6 +2,8 @@ use std::{iter::FromIterator, ops::Deref, sync::Arc, usize};
 
 use either::Either;
 
+use crate::types::NativeType;
+
 use super::Bytes;
 use super::IntoIter;
 
@@ -323,4 +325,40 @@ impl<T: crate::types::NativeType> From<Buffer<T>> for arrow_buffer::Buffer {
             value.length * std::mem::size_of::<T>(),
         )
     }
+}
+
+/// arrow2 Buffer -> arrow1 ScalarBuffer
+#[cfg(feature = "arrow")]
+impl<T> From<Buffer<T>> for arrow_buffer::ScalarBuffer<T>
+where
+    T: crate::types::NativeType + arrow_buffer::ArrowNativeType,
+{
+    fn from(array: Buffer<T>) -> Self {
+        let len = array.len();
+        Self::new(array.into(), 0, len)
+    }
+}
+
+/// arrow1 ScalarBuffer -> arrow2 Buffer
+#[cfg(feature = "arrow")]
+impl<T> From<arrow_buffer::ScalarBuffer<T>> for Buffer<T>
+where
+    T: crate::types::NativeType + arrow_buffer::ArrowNativeType,
+{
+    fn from(array: arrow_buffer::ScalarBuffer<T>) -> Self {
+        Self::from_bytes(crate::buffer::to_bytes(array.into()))
+    }
+}
+
+#[cfg(feature = "arrow")]
+#[test]
+fn test_scalar_buffer_arrow_conversion() {
+    let original = Buffer::<f64>::from(vec![0.0, 1.0, 2.0, 3.0]).sliced(1, 2);
+    assert_eq!(original.as_slice(), [1.0, 2.0]);
+
+    let arrow: arrow_buffer::ScalarBuffer<f64> = original.clone().into();
+    assert_eq!(arrow.as_ref(), [1.0, 2.0]);
+
+    let roundtrip: Buffer<f64> = arrow.into();
+    assert_eq!(roundtrip, original);
 }
