@@ -58,3 +58,24 @@ impl From<Vec<Field>> for Schema {
         }
     }
 }
+
+#[cfg(feature = "arrow")]
+impl From<arrow_schema::Schema> for Schema {
+    fn from(schema: arrow_schema::Schema) -> Self {
+        let arrow_schema::Schema { fields, metadata } = schema;
+        Self {
+            fields: fields.iter().map(Into::into).collect(),
+            metadata: metadata.into_iter().collect(),
+        }
+    }
+}
+
+#[cfg(feature = "arrow")]
+impl From<Schema> for arrow_schema::Schema {
+    fn from(schema: Schema) -> Self {
+        let Schema { fields, metadata } = schema;
+        let fields: arrow_schema::Fields =
+            fields.into_iter().map(arrow_schema::Field::from).collect();
+        Self::new_with_metadata(fields, metadata.into_iter().collect())
+    }
+}
