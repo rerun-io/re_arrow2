@@ -71,11 +71,31 @@ impl From<arrow_schema::Schema> for Schema {
 }
 
 #[cfg(feature = "arrow")]
+impl From<arrow_schema::SchemaRef> for Schema {
+    fn from(schema: arrow_schema::SchemaRef) -> Self {
+        let arrow_schema::Schema { fields, metadata } = schema.as_ref();
+        Self {
+            fields: fields.iter().map(Into::into).collect(),
+            metadata: metadata.clone().into_iter().collect(),
+        }
+    }
+}
+
+#[cfg(feature = "arrow")]
 impl From<Schema> for arrow_schema::Schema {
     fn from(schema: Schema) -> Self {
         let Schema { fields, metadata } = schema;
         let fields: arrow_schema::Fields =
             fields.into_iter().map(arrow_schema::Field::from).collect();
         Self::new_with_metadata(fields, metadata.into_iter().collect())
+    }
+}
+
+impl From<Schema> for arrow_schema::SchemaRef {
+    fn from(schema: Schema) -> Self {
+        let Schema { fields, metadata } = schema;
+        let fields: arrow_schema::Fields =
+            fields.into_iter().map(arrow_schema::Field::from).collect();
+        arrow_schema::Schema::new_with_metadata(fields, metadata.into_iter().collect()).into()
     }
 }
