@@ -269,9 +269,16 @@ impl<O: Offset + arrow_array::OffsetSizeTrait> From<arrow_array::GenericListArra
 {
     fn from(array1: arrow_array::GenericListArray<O>) -> Self {
         let (field1, offset_buffer1, array1, nulls1) = array1.into_parts();
-        let data_type1 = field1.data_type().clone();
+
+        let field2 = Arc::new(Field::from(arrow_schema::Field::clone(&field1)));
+        let data_type2 = if <O as Offset>::IS_LARGE {
+            DataType::LargeList(field2)
+        } else {
+            DataType::List(field2)
+        };
+
         Self::new(
-            Self::default_datatype(data_type1.into()),
+            data_type2,
             offset_buffer1.into(),
             array1.into(),
             nulls1.map(Bitmap::from_arrow),
@@ -283,99 +290,124 @@ impl<O: Offset + arrow_array::OffsetSizeTrait> From<arrow_array::GenericListArra
 #[test]
 fn test_arrow_list_array_conversion_non_null() {
     #![allow(clippy::zero_prefixed_literal)]
-    /*
-    We build this:
 
-    [0_001, 0_002],
-    [1_001, 1_002, 1_003],
-    [],
-    [3_001, 3_002],
-    [4_001],
-     */
-    let offsets = OffsetsBuffer::<i32>::from(Offsets::try_from(vec![0, 2, 5, 5, 7, 8]).unwrap());
-    let values = PrimitiveArray::<i16>::from_vec(vec![
-        0_001_i16, 0_002, //
-        1_001, 1_002, 1_003, //
-        //
-        3_001, 3_002, //
-        4_001,
-    ]);
-    // let bitmap = Some(Bitmap::from([true, truefalse, true]));
-    let bitmap = None;
+    for inner_nullability in [false, true] {
+        /*
+            We build this:
 
-    let list_array = ListArray::new(
-        DataType::List(Arc::new(Field::new("item", DataType::Int16, true))),
-        offsets,
-        values.boxed(),
-        bitmap,
-    );
+            [0_001, 0_002],
+            [1_001, 1_002, 1_003],
+            [],
+            [3_001, 3_002],
+            [4_001],
+        */
 
-    // Skip first and last elements:
-    let list_array = list_array.sliced(1, 3);
+        use arrow_array::Array;
+        let offsets =
+            OffsetsBuffer::<i32>::from(Offsets::try_from(vec![0, 2, 5, 5, 7, 8]).unwrap());
+        let values = PrimitiveArray::<i16>::from_vec(vec![
+            0_001_i16, 0_002, //
+            1_001, 1_002, 1_003, //
+            //
+            3_001, 3_002, //
+            4_001,
+        ]);
 
-    assert_eq!(list_array.len(), 3);
-    assert_eq!(list_array.value(0).len(), 3);
-    assert_eq!(list_array.value(1).len(), 0);
-    assert_eq!(list_array.value(2).len(), 2);
+        let bitmap = None;
+        let list_array = ListArray::new(
+            DataType::List(Arc::new(Field::new(
+                "item",
+                DataType::Int16,
+                inner_nullability,
+            ))),
+            offsets,
+            values.boxed(),
+            bitmap,
+        );
 
-    let list_array_1 = arrow_array::ListArray::from(list_array.clone());
-    assert_eq!(list_array_1.value_length(0), 3);
-    assert_eq!(list_array_1.value_length(1), 0);
-    assert_eq!(list_array_1.value_length(2), 2);
+        // Skip first and last elements:
+        let list_array = list_array.sliced(1, 3);
+        assert!(list_array.validity().is_none());
 
-    let roundtripped = ListArray::from(list_array_1);
+        assert_eq!(list_array.len(), 3);
+        assert_eq!(list_array.value(0).len(), 3);
+        assert_eq!(list_array.value(1).len(), 0);
+        assert_eq!(list_array.value(2).len(), 2);
 
-    assert_eq!(list_array, roundtripped);
+        let list_array_1 = arrow_array::ListArray::from(list_array.clone());
+        assert!(list_array_1.nulls().is_none());
+        assert_eq!(list_array_1.value_length(0), 3);
+        assert_eq!(list_array_1.value_length(1), 0);
+        assert_eq!(list_array_1.value_length(2), 2);
+
+        let roundtripped = ListArray::from(list_array_1);
+        assert!(roundtripped.validity().is_none());
+
+        assert_eq!(list_array.data_type(), roundtripped.data_type());
+        assert_eq!(list_array, roundtripped);
+    }
 }
 
 #[cfg(feature = "arrow")]
 #[test]
 fn test_arrow_list_array_conversion_nullable() {
     #![allow(clippy::zero_prefixed_literal)]
-    /*
-    We build this:
+    use arrow_array::Array as _;
 
-    [0_001, 0_002],
-    [1_001, 1_002, 1_003],
-    [],
-    [3_001, 3_002],
-    null,
-    [4_001],
-     */
-    let offsets = OffsetsBuffer::<i32>::from(Offsets::try_from(vec![0, 2, 5, 5, 7, 7, 8]).unwrap());
-    let values = PrimitiveArray::<i16>::from_vec(vec![
-        0_001_i16, 0_002, //
-        1_001, 1_002, 1_003, //
-        // []
-        3_001, 3_002, //
-        // null
-        4_001,
-    ]);
-    let bitmap = Some(Bitmap::from([true, true, true, true, false, true]));
+    for inner_nullability in [false, true] {
+        /*
+        We build this:
 
-    let list_array = ListArray::new(
-        DataType::List(Arc::new(Field::new("item", DataType::Int16, true))),
-        offsets,
-        values.boxed(),
-        bitmap,
-    );
+        [0_001, 0_002],
+        [1_001, 1_002, 1_003],
+        [],
+        [3_001, 3_002],
+        null,
+        [4_001],
+         */
+        let offsets =
+            OffsetsBuffer::<i32>::from(Offsets::try_from(vec![0, 2, 5, 5, 7, 7, 8]).unwrap());
+        let values = PrimitiveArray::<i16>::from_vec(vec![
+            0_001_i16, 0_002, //
+            1_001, 1_002, 1_003, //
+            // []
+            3_001, 3_002, //
+            // null
+            4_001,
+        ]);
+        let bitmap = Some(Bitmap::from([true, true, true, true, false, true]));
 
-    // Skip first and last elements:
-    let list_array = list_array.sliced(1, 4);
+        let list_array = ListArray::new(
+            DataType::List(Arc::new(Field::new(
+                "item",
+                DataType::Int16,
+                inner_nullability,
+            ))),
+            offsets,
+            values.boxed(),
+            bitmap,
+        );
 
-    assert_eq!(list_array.len(), 4);
-    assert_eq!(list_array.value(0).len(), 3);
-    assert_eq!(list_array.value(1).len(), 0);
-    assert_eq!(list_array.value(2).len(), 2);
-    assert_eq!(list_array.value(3).len(), 0); // null
+        // Skip first and last elements:
+        let list_array = list_array.sliced(1, 4);
 
-    let list_array_1 = arrow_array::ListArray::from(list_array.clone());
-    assert_eq!(list_array_1.value_length(0), 3);
-    assert_eq!(list_array_1.value_length(1), 0);
-    assert_eq!(list_array_1.value_length(2), 2);
-    assert_eq!(list_array_1.value_length(3), 0); // null
+        assert_eq!(list_array.len(), 4);
+        assert_eq!(list_array.value(0).len(), 3);
+        assert_eq!(list_array.value(1).len(), 0);
+        assert_eq!(list_array.value(2).len(), 2);
+        assert_eq!(list_array.value(3).len(), 0); // null
 
-    let roundtripped = ListArray::from(list_array_1);
+        let list_array_1 = arrow_array::ListArray::from(list_array.clone());
+        assert!(list_array_1.nulls().is_some());
+        assert_eq!(list_array_1.value_length(0), 3);
+        assert_eq!(list_array_1.value_length(1), 0);
+        assert_eq!(list_array_1.value_length(2), 2);
+        assert_eq!(list_array_1.value_length(3), 0); // null
 
-    assert_eq!(list_array, roundtripped);
+        let roundtripped = ListArray::from(list_array_1);
+
+        assert_eq!(list_array.data_type(), roundtripped.data_type());
+        assert_eq!(list_array, roundtripped);
+        assert!(roundtripped.validity().is_some());
+    }
 }
