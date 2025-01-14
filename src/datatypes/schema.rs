@@ -91,6 +91,7 @@ impl From<Schema> for arrow_schema::Schema {
     }
 }
 
+#[cfg(feature = "arrow")]
 impl From<Schema> for arrow_schema::SchemaRef {
     fn from(schema: Schema) -> Self {
         let Schema { fields, metadata } = schema;
