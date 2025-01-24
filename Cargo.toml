@@ -113,10 +113,10 @@ ahash = "0.8"
 memchr = { version = "2.6", optional = true }
 
 # Support conversion to/from arrow-rs
-arrow-buffer = { version = ">=52, <=53", optional = true }
-arrow-schema = { version = ">=52, <=53", optional = true }
-arrow-data = { version = ">=52, <=53", optional = true }
-arrow-array = { version = ">=52, <=53", optional = true }
+arrow-buffer = { version = "54", optional = true }
+arrow-schema = { version = "54", optional = true }
+arrow-data = { version = "54", optional = true }
+arrow-array = { version = "54", optional = true }
 
 half = { version = "2.2", features = ["bytemuck"] }
 
