@@ -14,12 +14,12 @@ jobs:
           rustup default 1.76.0
           rustup component add rustfmt clippy
       - name: Cache Cargo
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: /home/runner/.cargo
           key: cargo-maturin-cache-
       - name: Cache Rust dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: /home/runner/target
           key: ${{ runner.os }}-amd64-target-maturin-cache
