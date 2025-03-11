@@ -9,7 +9,7 @@ jobs:
         with:
           toolchain: 1.76.0
       - name: pin audit version
-        run: cargo install cargo-audit --version 0.21.1
+        run: cargo install cargo-audit --locked --version 0.21.1
       - uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
