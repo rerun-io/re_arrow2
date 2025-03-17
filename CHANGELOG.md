@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.18.3 2025-03-17
+## 0.19.0 2025-03-17
 - Update Arrow to 54.1 [#21](https://github.com/rerun-io/re_arrow2/pull/21)
 
 ## 0.18.2 2025-01-24
