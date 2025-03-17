@@ -17,7 +17,7 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
           pip install pip --upgrade
-          pip install pyarrow==6 pyorc
+          pip install pyarrow==14 pyorc numpy==1.26.4
           python parquet_integration/write_parquet.py
           python tests/it/io/orc/write.py
           deactivate
