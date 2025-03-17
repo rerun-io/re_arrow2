@@ -39,5 +39,6 @@ jobs:
           source venv/bin/activate
 
           pip install maturin==0.12.6 toml==0.10.2 pyarrow==14 numpy==1.26.4
+          cargo update half@2.5.0 --precise 2.4.1
           maturin develop
           python -m unittest discover tests
